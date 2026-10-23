@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetGraph - Redes de Telecomunicaciones</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>NETGRAPH</h1>
+    <p>Optimización de Redes de Telecomunicaciones · Matemática Discreta</p>
+  </div>
+  <span class="status" id="status">Sistema listo</span>
+</header>
+
+<div class="layout">
+  <aside>
+    <button class="nav active" data-view="dashboard">🏠 Inicio</button>
+    <button class="nav" data-view="servers">🖥️ Servidores</button>
+    <button class="nav" data-view="connections">🔗 Conexiones</button>
+    <button class="nav" data-view="matrix">▦ Matriz</button>
+    <button class="nav" data-view="euler">🔄 Euler</button>
+    <button class="nav" data-view="hamilton">🧭 Hamilton</button>
+    <button class="nav" data-view="coloring">🎨 Coloración</button>
+    <button class="nav" data-view="isomorphism">🔎 Isomorfismo</button>
+    <button class="nav" data-view="complete">📊 Análisis completo</button>
+  </aside>
+
+  <main>
+    <section id="dashboard" class="view active">
+      <h2>Panel principal</h2>
+      <div class="cards">
+        <div class="card"><span>Servidores</span><strong id="countServers">0</strong></div>
+        <div class="card"><span>Conexiones</span><strong id="countConnections">0</strong></div>
+        <div class="card"><span>Canales</span><strong id="countChannels">0</strong></div>
+        <div class="card"><span>Estado</span><strong>OK</strong></div>
+      </div>
+      <div class="panel">
+        <h3>Red actual</h3>
+        <div id="graphCanvas" class="graph"></div>
+        <p class="hint">La red se genera automáticamente con los servidores y conexiones almacenados en el navegador.</p>
+      </div>
+    </section>
+
+    <section id="servers" class="view">
+      <h2>Administración de servidores</h2>
+      <form id="serverForm" class="form-grid">
+        <input id="serverName" placeholder="Nombre (ej. S5)" required>
+        <input id="serverIp" placeholder="IP (ej. 192.168.1.14)" required>
+        <input id="serverLocation" placeholder="Ubicación" required>
+        <button>Registrar servidor</button>
+      </form>
+      <div class="panel"><div id="serverTable"></div></div>
+    </section>
+
+    <section id="connections" class="view">
+      <h2>Administración de conexiones</h2>
+      <form id="connectionForm" class="form-grid">
+        <select id="origin" required></select>
+        <select id="destination" required></select>
+        <input id="distance" type="number" min="0.1" step="0.1" placeholder="Distancia (km)" required>
+        <button>Registrar conexión</button>
+      </form>
+      <div class="panel"><div id="connectionTable"></div></div>
+    </section>
+
+    <section id="matrix" class="view">
+      <h2>Matriz de adyacencia</h2>
+      <div class="panel" id="matrixResult"></div>
+    </section>
+
+    <section id="euler" class="view">
+      <h2>Análisis Euleriano</h2>
+      <div class="panel">
+        <button class="action" onclick="showEuler()">Ejecutar análisis Euler</button>
+        <div id="eulerResult"></div>
+      </div>
+    </section>
+
+    <section id="hamilton" class="view">
+      <h2>Análisis Hamiltoniano</h2>
+      <div class="panel">
+        <button class="action" onclick="showHamilton()">Buscar camino Hamiltoniano</button>
+        <div id="hamiltonResult"></div>
+      </div>
+    </section>
+
+    <section id="coloring" class="view">
+      <h2>Coloración de grafos / Canales</h2>
+      <div class="panel">
+        <button class="action" onclick="showColoring()">Asignar canales</button>
+        <div id="coloringResult"></div>
+      </div>
+    </section>
+
+    <section id="isomorphism" class="view">
+      <h2>Isomorfismo</h2>
+      <div class="panel">
+        <p>Compara la red actual con una segunda red definida mediante una matriz.</p>
+        <label>Número de vértices de la segunda red</label>
+        <input id="isoN" type="number" min="1" max="8" value="4">
+        <button class="action" onclick="buildIsoMatrix()">Generar matriz G2</button>
+        <div id="isoMatrixBox"></div>
+        <div id="isoResult"></div>
+      </div>
+    </section>
+
+    <section id="complete" class="view">
+      <h2>Análisis completo</h2>
+      <button class="action" onclick="runComplete()">Ejecutar análisis completo</button>
+      <div id="completeResult"></div>
+    </section>
+  </main>
+</div>
+
+<footer>Proyecto académico · Universidad Mariano Gálvez · Matemática Discreta</footer>
+<script src="js/app.js"></script>
+</body>
+</html>

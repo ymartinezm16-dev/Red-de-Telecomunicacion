@@ -1,0 +1,44 @@
+const KEY="netgraph_data_v1";
+let data=JSON.parse(localStorage.getItem(KEY)||"null");
+if(!data){
+ data={servers:[
+  {id:1,name:"S1",ip:"192.168.1.10",location:"Guatemala",state:"ACTIVO"},
+  {id:2,name:"S2",ip:"192.168.1.11",location:"Mixco",state:"ACTIVO"},
+  {id:3,name:"S3",ip:"192.168.1.12",location:"Villa Nueva",state:"ACTIVO"},
+  {id:4,name:"S4",ip:"192.168.1.13",location:"Amatitlán",state:"ACTIVO"}],
+ connections:[
+  {id:1,a:1,b:2,d:10,state:"ACTIVA"},
+  {id:2,a:1,b:3,d:12,state:"ACTIVA"},
+  {id:3,a:2,b:3,d:8,state:"ACTIVA"},
+  {id:4,a:2,b:4,d:15,state:"ACTIVA"},
+  {id:5,a:3,b:4,d:9,state:"ACTIVA"}]};
+ save();
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function qs(id){return document.getElementById(id)}
+document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));qs(b.dataset.view).classList.add("active");renderAll()}));
+qs("serverForm").addEventListener("submit",e=>{e.preventDefault();const name=qs("serverName").value.trim(),ip=qs("serverIp").value.trim();if(data.servers.some(s=>s.name.toLowerCase()===name.toLowerCase()||s.ip===ip)){alert("El nombre o IP ya existe.");return}data.servers.push({id:nextId(data.servers),name,ip,location:qs("serverLocation").value.trim(),state:"ACTIVO"});e.target.reset();save();alert("Servidor registrado correctamente.")});
+qs("connectionForm").addEventListener("submit",e=>{e.preventDefault();const a=+qs("origin").value,b=+qs("destination").value,d=+qs("distance").value;if(a===b){alert("El origen y destino deben ser diferentes.");return}if(data.connections.some(x=>(x.a===a&&x.b===b)||(x.a===b&&x.b===a))){alert("La conexión ya existe.");return}data.connections.push({id:nextId(data.connections),a,b,d,state:"ACTIVA"});e.target.reset();save();alert("Conexión registrada correctamente.")});
+function nextId(a){return a.length?Math.max(...a.map(x=>x.id))+1:1}
+function renderAll(){qs("countServers").textContent=data.servers.length;qs("countConnections").textContent=data.connections.length;const col=coloring();qs("countChannels").textContent=col.colors.length?Math.max(...col.colors)+1:0;renderServers();renderConnections();renderSelectors();renderMatrix();drawGraph()}
+function renderServers(){qs("serverTable").innerHTML=`<table><thead><tr><th>ID</th><th>Nombre</th><th>IP</th><th>Ubicación</th><th>Estado</th></tr></thead><tbody>${data.servers.map(s=>`<tr><td>${s.id}</td><td>${esc(s.name)}</td><td>${esc(s.ip)}</td><td>${esc(s.location)}</td><td>${s.state}</td></tr>`).join("")}</tbody></table>`}
+function renderConnections(){qs("connectionTable").innerHTML=`<table><thead><tr><th>ID</th><th>Origen</th><th>Destino</th><th>Distancia</th><th>Estado</th></tr></thead><tbody>${data.connections.map(x=>`<tr><td>${x.id}</td><td>${serverName(x.a)}</td><td>${serverName(x.b)}</td><td>${x.d} km</td><td>${x.state}</td></tr>`).join("")}</tbody></table>`}
+function serverName(id){return data.servers.find(s=>s.id===id)?.name||"?"}
+function renderSelectors(){["origin","destination"].forEach(id=>{qs(id).innerHTML=data.servers.map(s=>`<option value="${s.id}">${s.name} - ${s.ip}</option>`).join("")})}
+function matrix(){const n=data.servers.length,m=Array.from({length:n},()=>Array(n).fill(0)),idx=new Map(data.servers.map((s,i)=>[s.id,i]));data.connections.forEach(x=>{let a=idx.get(x.a),b=idx.get(x.b);if(a!==undefined&&b!==undefined)m[a][b]=m[b][a]=1});return m}
+function renderMatrix(){const m=matrix();let h="<h3>Matriz de adyacencia</h3><table class='mini-matrix'><tr><th></th>"+data.servers.map(s=>`<th>${s.name}</th>`).join("")+"</tr>";m.forEach((r,i)=>h+=`<tr><th>${data.servers[i].name}</th>${r.map(v=>`<td>${v}</td>`).join("")}</tr>`);h+="</table>";qs("matrixResult").innerHTML=h}
+function degrees(m=matrix()){return m.map(r=>r.reduce((a,b)=>a+b,0))}
+function euler(){const g=degrees(),odd=g.map((v,i)=>v%2?i:null).filter(v=>v!==null);let type=odd.length===0?"Circuito Euleriano":odd.length===2?"Camino Euleriano":"No existe recorrido Euleriano";return {g,odd,type}}
+function hamilton(){const m=matrix(),n=m.length;if(!n)return [];const used=Array(n).fill(false),path=[];function bt(v){if(path.length===n)return true;for(let u=0;u<n;u++)if(!used[u]&&m[v][u]){used[u]=true;path.push(u);if(bt(u))return true;path.pop();used[u]=false}return false}for(let s=0;s<n;s++){used.fill(false);path.length=0;used[s]=true;path.push(s);if(bt(s))return [...path]}return []}
+function coloring(){const m=matrix(),n=m.length,c=Array(n).fill(-1);for(let v=0;v<n;v++){const used=new Set();for(let u=0;u<n;u++)if(m[v][u]&&c[u]>=0)used.add(c[u]);let x=0;while(used.has(x))x++;c[v]=x}return {colors:c}}
+function showEuler(){const r=euler();qs("eulerResult").innerHTML=`<div class="result ${r.odd.length<=2?"success":"warning"}"><b>Grados:</b> ${r.g.map((x,i)=>data.servers[i].name+"="+x).join(" · ")}<br><b>Vértices impares:</b> ${r.odd.length}<br><b>Resultado:</b> ${r.type}</div>`}
+function showHamilton(){const p=hamilton();qs("hamiltonResult").innerHTML=`<div class="result ${p.length?"success":"warning"}"><b>Resultado:</b> ${p.length?"Se encontró un camino Hamiltoniano.":"No se encontró un camino Hamiltoniano."}<br>${p.length?"<b>Camino:</b> "+p.map(i=>data.servers[i].name).join(" → "):""}</div>`}
+function showColoring(){const r=coloring();qs("coloringResult").innerHTML=`<div class="result success"><b>Canales utilizados:</b> ${r.colors.length?Math.max(...r.colors)+1:0}<br>${r.colors.map((c,i)=>`<span class="channel">${data.servers[i].name} → Canal ${c+1}</span>`).join("")}</div>`}
+function runComplete(){showEuler();showHamilton();showColoring();qs("completeResult").innerHTML=`<div class="result"><h3>Resumen del análisis</h3><p>Los resultados anteriores se calcularon sobre la red actual almacenada en localStorage.</p><p><b>Servidores:</b> ${data.servers.length} · <b>Conexiones:</b> ${data.connections.length}</p></div>`}
+function drawGraph(){const box=qs("graphCanvas");box.innerHTML="";const n=data.servers.length;if(!n)return;const cx=box.clientWidth/2||400,cy=185,r=Math.min(cx-70,145);const pos=data.servers.map((s,i)=>{let a=-Math.PI/2+i*2*Math.PI/n;return{x:cx+r*Math.cos(a)-36,y:cy+r*Math.sin(a)-36}});data.connections.forEach(x=>{const a=data.servers.findIndex(s=>s.id===x.a),b=data.servers.findIndex(s=>s.id===x.b);if(a<0||b<0)return;const dx=pos[b].x-pos[a].x+36,dy=pos[b].y-pos[a].y+36,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)*180/Math.PI;const e=document.createElement("div");e.className="edge";e.style.left=(pos[a].x+36)+"px";e.style.top=(pos[a].y+36)+"px";e.style.width=len+"px";e.style.transform=`rotate(${ang}deg)`;box.appendChild(e)});pos.forEach((p,i)=>{const e=document.createElement("div");e.className="node";e.style.left=p.x+"px";e.style.top=p.y+"px";e.textContent=data.servers[i].name;box.appendChild(e)})}
+function buildIsoMatrix(){const n=Math.min(8,Math.max(1,+qs("isoN").value||4));let h="<h3>Matriz G2</h3><table class='mini-matrix'>";for(let i=0;i<n;i++){h+="<tr>";for(let j=0;j<n;j++){if(i===j)h+="<td>0</td>";else if(j<i)h+=`<td id="mirror-${j}-${i}">0</td>`;else h+=`<td><input id="iso-${i}-${j}" type="number" min="0" max="1" value="0" style="width:55px"></td>`}h+="</tr>"}h+="</table><button class='action' onclick='checkIso("+n+")'>Comparar G1 y G2</button>";qs("isoMatrixBox").innerHTML=h;qs("isoResult").innerHTML=""}
+function checkIso(n){const m2=Array.from({length:n},()=>Array(n).fill(0));for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const v=+document.getElementById(`iso-${i}-${j}`).value||0;m2[i][j]=m2[j][i]=v?1:0}const m1=matrix();if(m1.length!==n){qs("isoResult").innerHTML="<div class='result warning'>G1 y G2 deben tener la misma cantidad de vértices.</div>";return}const d1=degrees(m1).sort((a,b)=>a-b),d2=degrees(m2).sort((a,b)=>a-b),e1=m1.flat().reduce((a,b)=>a+b,0)/2,e2=m2.flat().reduce((a,b)=>a+b,0)/2;const ok=e1===e2&&JSON.stringify(d1)===JSON.stringify(d2)&&backIso(m1,m2);qs("isoResult").innerHTML=`<div class="result ${ok?"success":"warning"}"><b>Aristas G1:</b> ${e1} · <b>Aristas G2:</b> ${e2}<br><b>Secuencia de grados:</b> ${d1.join(", ")} vs ${d2.join(", ")}<br><b>Resultado:</b> ${ok?"Los grafos son isomorfos.":"Los grafos no son isomorfos."}</div>`}
+function backIso(a,b){const n=a.length,map=Array(n).fill(-1),used=Array(n).fill(false),da=degrees(a),db=degrees(b);function bt(v){if(v===n)return true;for(let x=0;x<n;x++)if(!used[x]&&da[v]===db[x]){let ok=true;for(let u=0;u<v;u++)if(a[v][u]!==b[x][map[u]]){ok=false;break}if(ok){map[v]=x;used[x]=true;if(bt(v+1))return true;used[x]=false}}return false}return bt(0)}
+renderAll();
+window.addEventListener("resize",drawGraph);
