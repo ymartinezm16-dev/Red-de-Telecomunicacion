@@ -1,7 +1,5 @@
 # NetGraph - Versión HTML completa
 
-Proyecto de Matemática Discreta - Universidad Mariano Gálvez.
-
 ## Qué incluye
 - HTML5
 - CSS3
@@ -33,14 +31,3 @@ También puedes abrir `index.html` directamente con Chrome, Edge o Firefox.
 ## Datos
 Los datos iniciales son cuatro servidores y cinco conexiones. Las modificaciones se guardan automáticamente en el navegador usando localStorage.
 
-## Para el Entregable 2
-Puedes tomar capturas de:
-- Pantalla principal.
-- Servidores.
-- Conexiones.
-- Matriz.
-- Euler.
-- Hamilton.
-- Coloración.
-- Isomorfismo.
-- Análisis completo.
